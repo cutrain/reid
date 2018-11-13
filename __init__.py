@@ -1,9 +1,8 @@
 import imageio
 imageio.plugins.ffmpeg.download()
 
-from get_data import get_data
-from get_picture import get_picture
-from classifier import exam_id
+from .get_data import get_data
+from .get_picture import get_picture
 
 def reid(input_type, path):
     video = get_data.main(input_type, path)
