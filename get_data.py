@@ -1,6 +1,6 @@
 import imageio
 
-def main(input_type, path):
+def get_data(path, input_type='local'):
     # TODO: multiple data type
     assert input_type in ['local', 'ftp', 'sql', 'network'], "type %s not in list" % input_type
     if input_type == 'local':
