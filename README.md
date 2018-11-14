@@ -20,7 +20,11 @@ cv2.destroyAllWindows()
 ```
 
 #faster rcnn for reid人物切割功能
-’‘’
+```
 1：设置坐标json存储路径 in  demo.py line 407
-2: import /lib/data/save_json.py cut_image 读取存储目标信息文件，裁剪图片
-‘’‘
+2:
+```
+```python
+import ./lib/data/save_json.py 
+image = cut_image(path) # 读取存储目标信息文件，裁剪图片
+```
