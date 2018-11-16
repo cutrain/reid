@@ -3,6 +3,8 @@ imageio.plugins.ffmpeg.download()
 
 from .get_data import get_data
 from .get_picture import get_picture
+from .vehicle_detection import detect_car
+from .util import draw_boxes
 
 def reid(input_type, path):
     video = get_data.main(input_type, path)

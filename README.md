@@ -9,12 +9,16 @@ pip install -r requirements.txt
 ```python
 import reid
 import cv2
+# read video
 video = reid.get_data('/path/to/your/file')
+# generate pictures
 pictures = reid.get_picture(video)
-for picture in pictures:
-	cv2.imshow('pic', picture)
-	k = cv2.waitKey(30) & 0xff
-	if k == 29:
-		break
+picture = pictures.__next__()
+# vehicle detection
+bboxes = reid.detect_car(picture)
+img = reid.draw_boxes(picture, bboxes)
+
+cv2.imshow('pic', img)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
 ```
