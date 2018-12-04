@@ -4,6 +4,7 @@ import imageio
 import skimage
 import numpy as np
 import pandas as pd
+from .util import to_numpy
 
 time_gap = 24
 pix_gap = 3000 # 0.0038
@@ -20,7 +21,7 @@ def get_picture(video):
             diff_pix = np.sum(np.sign(temp))
             if diff_pix > pix_gap:
                 pre_time = num
-                yield im
+                yield to_numpy(im)
 
 if __name__ == "__main__":
     import get_data

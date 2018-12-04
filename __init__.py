@@ -3,20 +3,25 @@ imageio.plugins.ffmpeg.download()
 
 from .get_data import get_data
 from .get_picture import get_picture
+from .get_feature import get_feature
 from .vehicle_detection import detect_car
-from .util import draw_boxes
+from .retrieval import retrieval
+from .util import draw_boxes, cut_image
 
-def reid(input_type, path):
-    video = get_data.main(input_type, path)
-    pictures = get_picture.main(video)
-    ret = []
+def sample():
+    dataset_path = './a.mp4'
+    query_path = './a.jpg'
+    video = get_data(path)
+    pictures = get_picture(video)
+    dataset = []
     for picture in pictures:
-        persons = get_person.main(picture)
-        res = []
-        for person in persons:
-            feature = get_feature.main(person)
-            pid = exam_id(feature)
-            res.append((pid,person))
-        ret.append((picture, res))
-    return ret
+        bboxes = detect_car(picture)
+        cars = cut_image(picture, bboxes)
+        features = get_feature(cars)
+        dataset.append(features)
+    import numpy as np
+    dataset = np.stack(dataset)
+    query = imageio.read(query_path)
+    near_pictures = retrieval(query, dataset, k=10)
+
 
