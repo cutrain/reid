@@ -5,8 +5,14 @@ from .get_data import get_data
 from .get_picture import get_picture
 from .get_feature import get_feature
 from .vehicle_detection import detect_car
+from .frcnn import detect
 from .retrieval import retrieval
 from .util import draw_boxes, cut_image
+
+def person_reid_pipeline(videos, images):
+    """
+    param videos:
+    """
 
 def sample():
     dataset_path = './a.mp4'
