@@ -3,3 +3,6 @@
 *.swp
 __pycache__/
 data
+
+*.o
+*.so

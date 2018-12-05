@@ -63,8 +63,14 @@ def detect(imgs, class_name='person'):
     """
     global fasterRCNN, im_data, im_info, num_boxes, gt_boxes, class_col, pascal_classes, cuda
     assert class_name in ['person'], "{} is not supported class".format(class_name)
+    assert isinstance(imgs, (list, np.ndarray)), "input must be a list of images or ndarray"
+    if isinstance(imgs, list):
+        imgs = np.stack(imgs)
+
     num_images = len(imgs)
     print('load {} images'.format(num_images))
+
+
 
     if len(imgs.shape) == 3:
         imgs = imgs[:,:,:,np.newaxis]
