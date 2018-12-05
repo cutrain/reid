@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 import torchvision.models as models
-from lib.model.utils.config import cfg
-from lib.model.roi_crop.functions.roi_crop import RoICropFunction
+from ..utils.config import cfg
+# from ..roi_crop.functions.roi_crop import RoICropFunction
 import cv2
 import pdb
 import random

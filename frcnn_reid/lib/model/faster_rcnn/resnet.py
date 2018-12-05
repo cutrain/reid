@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.model.utils.config import cfg
-from lib.model.faster_rcnn.faster_rcnn import _fasterRCNN
+from ..utils.config import cfg
+from .faster_rcnn import _fasterRCNN
 
 import torch
 import torch.nn as nn

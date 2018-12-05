@@ -5,10 +5,10 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 import torch
-from lib.model.utils.config import cfg
+from ..utils.config import cfg
 if torch.cuda.is_available():
-    from lib.model.nms.nms_gpu import nms_gpu
-from lib.model.nms.nms_cpu import nms_cpu
+    from ..nms.nms_gpu import nms_gpu
+from ..nms.nms_cpu import nms_cpu
 
 def nms(dets, thresh, force_cpu=False):
     """Dispatch to either CPU or GPU NMS implementations."""

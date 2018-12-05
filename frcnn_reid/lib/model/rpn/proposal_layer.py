@@ -16,10 +16,10 @@ import math
 import yaml
 import os.path as osp
 import json
-from lib.model.utils.config import cfg
+from ..utils.config import cfg
 from .generate_anchors import generate_anchors
 from .bbox_transform import bbox_transform_inv, clip_boxes, clip_boxes_batch
-from lib.model.nms.nms_wrapper import nms
+from ..nms.nms_wrapper import nms
 
 import pdb
 
