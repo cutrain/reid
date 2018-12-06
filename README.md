@@ -11,7 +11,7 @@ cuda9.0
 git clone https://github.com/cutrain/reid
 cd reid
 pip install -r requirements.txt
-cd frcnn_reid/lib
+cd frcnn/lib
 ./make.sh
 ```
 
