@@ -80,74 +80,75 @@ def detect(imgs, class_name='person'):
         [blob.shape[1], blob.shape[2], im_scales[0]] * num_images
     ], dtype=np.float32)
 
-    im_data_pt = torch.from_numpy(blob)
-    im_data_pt = im_data_pt.permute(0, 3, 1, 2)
-    im_info_pt = torch.from_numpy(im_info_np)
+    with torch.no_grad():
+        im_data_pt = torch.from_numpy(blob)
+        im_data_pt = im_data_pt.permute(0, 3, 1, 2)
+        im_info_pt = torch.from_numpy(im_info_np)
 
-    im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
-    im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
-    gt_boxes.data.resize_(num_images, 1, 5).zero_()
-    num_boxes.data.resize_(1).zero_()
+        im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
+        im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
+        gt_boxes.data.resize_(num_images, 1, 5).zero_()
+        num_boxes.data.resize_(1).zero_()
 
-    print('data prepare end')
+        print('data prepare end')
 
-    rois, cls_prob, bbox_pred, \
-    rpn_loss_cls, rpn_loss_box, \
-    RCNN_loss_cls, RCNN_loss_bbox, \
-    rois_label = fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
+        rois, cls_prob, bbox_pred, \
+        rpn_loss_cls, rpn_loss_box, \
+        RCNN_loss_cls, RCNN_loss_bbox, \
+        rois_label = fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
 
-    print('predict end')
+        print('predict end')
 
-    scores = cls_prob.data
-    boxes = rois.data[:, :, 1:5]
+        scores = cls_prob.data
+        boxes = rois.data[:, :, 1:5]
 
-    # Apply bounding-box regression deltas
-    box_deltas = bbox_pred.data
-    # Optionally normalize targets by a precomputed mean and stdev
-    if cuda:
-        box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
-                   + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
-    else:
-        box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS) \
-                   + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS)
-    box_deltas = box_deltas.view(num_images, -1, 4 * len(pascal_classes))
-
-    pred_boxes = bbox_transform_inv(boxes, box_deltas, num_images)
-    pred_boxes = clip_boxes(pred_boxes, im_info.data, num_images)
-
-    pred_boxes /= im_scales[0]
-
-    print('normalize end')
-
-    # TODO: check 1 size dim
-    # scores = scores.squeeze()
-    # pred_boxes = pred_boxes.squeeze()
-
-    vis = False
-    thresh = 0.05
-    max_per_image = 100
-    NMS = 0.3
-
-    col = class_col[class_name]
-    bboxes = []
-
-    for i in range(num_images):
-        inds = torch.nonzero(scores[i][:,col]>thresh).view(-1)
-        # if there is det
-        if inds.numel() > 0:
-            cls_scores = scores[i][:,col][inds]
-            _, order = torch.sort(cls_scores, 0, True)
-            cls_boxes = pred_boxes[i][inds][:, col * 4:(col+1) * 4]
-            cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
-            cls_dets = cls_dets[order]
-            keep = nms(cls_dets, NMS, force_cpu= not cuda)
-            cls_dets = cls_dets[keep.view(-1).long()]
-            bboxes.append(extract_boxes(cls_dets.cpu().numpy(), 0.8))
+        # Apply bounding-box regression deltas
+        box_deltas = bbox_pred.data
+        # Optionally normalize targets by a precomputed mean and stdev
+        if cuda:
+            box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
+                       + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
         else:
-            bboxes.append([])
+            box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS) \
+                       + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS)
+        box_deltas = box_deltas.view(num_images, -1, 4 * len(pascal_classes))
 
-    print('bbox check end')
-    return bboxes
+        pred_boxes = bbox_transform_inv(boxes, box_deltas, num_images)
+        pred_boxes = clip_boxes(pred_boxes, im_info.data, num_images)
+
+        pred_boxes /= im_scales[0]
+
+        print('normalize end')
+
+        # TODO: check 1 size dim
+        # scores = scores.squeeze()
+        # pred_boxes = pred_boxes.squeeze()
+
+        vis = False
+        thresh = 0.05
+        max_per_image = 100
+        NMS = 0.3
+
+        col = class_col[class_name]
+        bboxes = []
+
+        for i in range(num_images):
+            inds = torch.nonzero(scores[i][:,col]>thresh).view(-1)
+            # if there is det
+            if inds.numel() > 0:
+                cls_scores = scores[i][:,col][inds]
+                _, order = torch.sort(cls_scores, 0, True)
+                cls_boxes = pred_boxes[i][inds][:, col * 4:(col+1) * 4]
+                cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
+                cls_dets = cls_dets[order]
+                keep = nms(cls_dets, NMS, force_cpu= not cuda)
+                cls_dets = cls_dets[keep.view(-1).long()]
+                bboxes.append(extract_boxes(cls_dets.cpu().numpy(), 0.8))
+            else:
+                bboxes.append([])
+
+        print('bbox check end')
+        return bboxes
 
 
 
@@ -172,39 +173,40 @@ class_col = {
     'person':1,
 }
 
-fasterRCNN = vgg16(pascal_classes, pretrained=False, class_agnostic=False)
-fasterRCNN.create_architecture()
+with torch.no_grad():
+    fasterRCNN = vgg16(pascal_classes, pretrained=False, class_agnostic=False)
+    fasterRCNN.create_architecture()
 
-cuda = True if torch.cuda.is_available() else False
-cfg.USE_GPU_NMS = cuda
+    cuda = True if torch.cuda.is_available() else False
+    cfg.USE_GPU_NMS = cuda
 
-print('start load model')
+    print('start load model')
 
-if cuda:
-    checkpoint = torch.load(model_path)
-else:
-    checkpoint = torch.load(model_path, map_location=(lambda storage, loc: storage))
-fasterRCNN.load_state_dict(checkpoint['model'])
-print('load model successfully!')
+    if cuda:
+        checkpoint = torch.load(model_path)
+    else:
+        checkpoint = torch.load(model_path, map_location=(lambda storage, loc: storage))
+    fasterRCNN.load_state_dict(checkpoint['model'])
+    print('load model successfully!')
 
-im_data = torch.FloatTensor(1)
-im_info = torch.FloatTensor(1)
-num_boxes = torch.LongTensor(1)
-gt_boxes = torch.FloatTensor(1)
+    im_data = torch.FloatTensor(1)
+    im_info = torch.FloatTensor(1)
+    num_boxes = torch.LongTensor(1)
+    gt_boxes = torch.FloatTensor(1)
 
-if cuda:
-    im_data = im_data.cuda()
-    im_info = im_info.cuda()
-    num_boxes = num_boxes.cuda()
-    gt_boxes = gt_boxes.cuda()
+    if cuda:
+        im_data = im_data.cuda()
+        im_info = im_info.cuda()
+        num_boxes = num_boxes.cuda()
+        gt_boxes = gt_boxes.cuda()
 
 
-im_data = Variable(im_data, volatile=True)
-im_info = Variable(im_info, volatile=True)
-num_boxes = Variable(num_boxes, volatile=True)
-gt_boxes = Variable(gt_boxes, volatile=True)
+    im_data = Variable(im_data)
+    im_info = Variable(im_info)
+    num_boxes = Variable(num_boxes)
+    gt_boxes = Variable(gt_boxes)
 
-if cuda:
-    fasterRCNN.cuda()
+    if cuda:
+        fasterRCNN.cuda()
 
-fasterRCNN.eval()
+    fasterRCNN.eval()
