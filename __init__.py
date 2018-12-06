@@ -76,12 +76,15 @@ def person_reid(person_paths, video_paths, k=10):
         cut_images.extend(cut_image(pictures[i], bboxes[i]))
     print('get feature ... ', end='')
     features = get_feature(cut_images)
-    query = features
+    querys = features
     print('finish building query')
 
     print('retrievaling')
-    indexs = retrieval(query, dataset, k=k)
+    ret = []
+    for query in querys:
+        indexs = retrieval(query, dataset, k=k)
+        ret.append(dataset[indexs])
     print('finish')
-    return dataset[indexs]
+    return ret
 
 
