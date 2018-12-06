@@ -44,6 +44,7 @@ def person_reid(person_paths, video_paths, k=10):
 
     print('building dataset')
     dataset = []
+    cut_images = []
     for path in vpath:
         print('get video {} ... '.format(path), end='')
         video = get_data(path)
@@ -51,7 +52,6 @@ def person_reid(person_paths, video_paths, k=10):
         pictures = list(get_picture(video))
         print('detect person ... ', end='')
         bboxes = detect(pictures)
-        cut_images = []
         for i in range(len(bboxes)):
             cut_images.extend(cut_image(pictures[i], bboxes[i]))
         print('get feature ... ', end='')
@@ -83,7 +83,10 @@ def person_reid(person_paths, video_paths, k=10):
     ret = []
     for query in querys:
         indexs = retrieval(query, dataset, k=k)
-        ret.append(dataset[indexs])
+        one_ret = []
+        for index in indexs:
+            one_ret.append(cut_images[index])
+        ret.append(one_ret)
     print('finish')
     return ret
 
