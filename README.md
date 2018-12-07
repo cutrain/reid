@@ -15,6 +15,9 @@ cd frcnn/lib
 ./make.sh
 ```
 
+# prepare
+You should put the pretrained model at ./frcnn/model/faster_rcnn.pth
+
 # *use* (one step)
 ```python
 import sys

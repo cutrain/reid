@@ -161,7 +161,7 @@ boxs = [[]]
 module_path = os.path.dirname(sys.modules[__package__].__file__)
 model_path = os.path.join(module_path, './model/faster_rcnn.pth')
 if not os.path.exists(model_path):
-    raise Exception("There is no model, maybe you should create a directory 'model' and put a model named 'resnet101_caffe.pth' in it")
+    raise Exception("There is no model, maybe you should create a directory 'model' and put a model named 'faster_rcnn.pth' in it")
 
 # load config file
 config_path = os.path.join(module_path, './cfgs/vgg16.yml')
