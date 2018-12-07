@@ -69,13 +69,8 @@ def person_reid(person_paths, video_paths, k=10):
         from scipy.misc import imread
         picture = imread(path)
         pictures.append(picture)
-    print('detect person ... ')
-    bboxes = list(map(detect,pictures))
-    query_images = []
-    for i in range(len(bboxes)):
-        query_images.extend(cut_image(pictures[i], bboxes[i]))
     print('get feature ... ')
-    features = get_feature(query_images)
+    features = get_feature(pictures)
     querys = features
     print('finish building query')
 
