@@ -2,7 +2,7 @@ Reid sub-system
 
 # Requirement
 ```
-gcc version <= 6
+gcc-5
 cuda9.0
 ```
 
