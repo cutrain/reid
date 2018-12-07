@@ -9,14 +9,20 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Iterate through the bounding boxes
     for bbox in bboxes:
         # Draw a rectangle given bbox coordinates
-        cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
+        if len(bbox) == 2:
+            cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
+        else:
+            cv2.rectangle(imcopy, (bbox[0], bbox[2]), (bbox[1], bbox[3]), color, thick)
     # Return the image copy with boxes drawn
     return imcopy
 
 def cut_image(img, bboxes):
     ret = []
     for bbox in bboxes:
-        ret.append(img[bbox[0][0]:bbox[1][0], bbox[0][1]:bbox[1][1]])
+        if len(bbox) == 2:
+            ret.append(img[bbox[0][0]:bbox[1][0], bbox[0][1]:bbox[1][1]])
+        else:
+            ret.append(img[bbox[0]:bbox[1], bbox[2]:bbox[3]])
     return ret
 
 def to_numpy(tensor):

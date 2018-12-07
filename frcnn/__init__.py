@@ -59,25 +59,19 @@ def extract_boxes(dets, threshold):
 
 def detect(imgs, class_name='person'):
     """
-    param: ndarray (batch_size, w, h, c) or (batch_size, w, h)  with RGB channel
+    param: ndarray (w, h, c) or (w, h)  with RGB channel
     """
     global fasterRCNN, im_data, im_info, num_boxes, gt_boxes, class_col, pascal_classes, cuda
     assert class_name in ['person'], "{} is not supported class".format(class_name)
-    assert isinstance(imgs, (list, np.ndarray)), "input must be a list of images or ndarray"
-    if isinstance(imgs, list):
-        imgs = np.stack(imgs)
 
-    num_images = len(imgs)
-    print('load {} images'.format(num_images))
-
-
+    imgs = imgs.reshape((1, *imgs.shape))
 
     if len(imgs.shape) == 3:
         imgs = imgs[:,:,:,np.newaxis]
         imgs = np.concatenate((imgs, imgs, imgs), axis=3)
     blob, im_scales = __get_real_input(imgs)
     im_info_np = np.array([
-        [blob.shape[1], blob.shape[2], im_scales[0]] * num_images
+        [blob.shape[1], blob.shape[2], im_scales[0]]
     ], dtype=np.float32)
 
     with torch.no_grad():
@@ -87,17 +81,13 @@ def detect(imgs, class_name='person'):
 
         im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
         im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
-        gt_boxes.data.resize_(num_images, 1, 5).zero_()
+        gt_boxes.data.resize_(1, 1, 5).zero_()
         num_boxes.data.resize_(1).zero_()
-
-        print('data prepare end')
 
         rois, cls_prob, bbox_pred, \
         rpn_loss_cls, rpn_loss_box, \
         RCNN_loss_cls, RCNN_loss_bbox, \
         rois_label = fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
-
-        print('predict end')
 
         scores = cls_prob.data
         boxes = rois.data[:, :, 1:5]
@@ -111,18 +101,16 @@ def detect(imgs, class_name='person'):
         else:
             box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS) \
                        + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS)
-        box_deltas = box_deltas.view(num_images, -1, 4 * len(pascal_classes))
+        box_deltas = box_deltas.view(1, -1, 4 * len(pascal_classes))
 
-        pred_boxes = bbox_transform_inv(boxes, box_deltas, num_images)
-        pred_boxes = clip_boxes(pred_boxes, im_info.data, num_images)
+        pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
+        pred_boxes = clip_boxes(pred_boxes, im_info.data, 1)
 
         pred_boxes /= im_scales[0]
 
-        print('normalize end')
-
         # TODO: check 1 size dim
-        # scores = scores.squeeze()
-        # pred_boxes = pred_boxes.squeeze()
+        scores = scores.squeeze()
+        pred_boxes = pred_boxes.squeeze()
 
         vis = False
         thresh = 0.05
@@ -132,22 +120,19 @@ def detect(imgs, class_name='person'):
         col = class_col[class_name]
         bboxes = []
 
-        for i in range(num_images):
-            inds = torch.nonzero(scores[i][:,col]>thresh).view(-1)
-            # if there is det
-            if inds.numel() > 0:
-                cls_scores = scores[i][:,col][inds]
-                _, order = torch.sort(cls_scores, 0, True)
-                cls_boxes = pred_boxes[i][inds][:, col * 4:(col+1) * 4]
-                cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
-                cls_dets = cls_dets[order]
-                keep = nms(cls_dets, NMS, force_cpu= not cuda)
-                cls_dets = cls_dets[keep.view(-1).long()]
-                bboxes.append(extract_boxes(cls_dets.cpu().numpy(), 0.8))
-            else:
-                bboxes.append([])
+        inds = torch.nonzero(scores[:,col]>thresh).view(-1)
+        # if there is det
+        if inds.numel() > 0:
+            cls_scores = scores[:,col][inds]
+            _, order = torch.sort(cls_scores, 0, True)
+            cls_boxes = pred_boxes[inds][:, col * 4:(col+1) * 4]
+            cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
+            cls_dets = cls_dets[order]
+            keep = nms(cls_dets, NMS, force_cpu= not cuda)
+            cls_dets = cls_dets[keep.view(-1).long()]
+            if len(cls_dets) > 0:
+                bboxes.extend(extract_boxes(cls_dets.cpu().numpy(), 0.8))
 
-        print('bbox check end')
         return bboxes
 
 

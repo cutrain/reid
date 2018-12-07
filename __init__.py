@@ -44,38 +44,38 @@ def person_reid(person_paths, video_paths, k=10):
 
     print('building dataset')
     dataset = []
-    cut_images = []
+    data_images = []
     for path in vpath:
-        print('get video {} ... '.format(path), end='')
+        print('get video {} ... '.format(path))
         video = get_data(path)
-        print('extract pictures ... ', end='')
+        print('extract pictures ... ')
         pictures = list(get_picture(video))
-        print('detect person ... ', end='')
-        bboxes = detect(pictures)
+        print('detect person ... ')
+        bboxes = list(map(detect,pictures))
         for i in range(len(bboxes)):
-            cut_images.extend(cut_image(pictures[i], bboxes[i]))
-        print('get feature ... ', end='')
-        features = get_feature(cut_images)
-        dataset.append(features)
+            data_images.extend(cut_image(pictures[i], bboxes[i]))
+        print('get feature ... ')
+        features = get_feature(data_images)
+        dataset.extend(list(features))
         print('finish video {}'.format(path))
     dataset = np.stack(dataset)
 
     print('finish building dataset')
 
-    print('building query ... ', end='')
+    print('building query ... ')
 
     pictures = []
     for path in ppath:
         from scipy.misc import imread
         picture = imread(path)
         pictures.append(picture)
-    print('detect person ... ', end='')
-    bboxes = detect(pictures)
-    cut_images = []
+    print('detect person ... ')
+    bboxes = list(map(detect,pictures))
+    query_images = []
     for i in range(len(bboxes)):
-        cut_images.extend(cut_image(pictures[i], bboxes[i]))
-    print('get feature ... ', end='')
-    features = get_feature(cut_images)
+        query_images.extend(cut_image(pictures[i], bboxes[i]))
+    print('get feature ... ')
+    features = get_feature(query_images)
     querys = features
     print('finish building query')
 
@@ -85,7 +85,7 @@ def person_reid(person_paths, video_paths, k=10):
         indexs = retrieval(query, dataset, k=k)
         one_ret = []
         for index in indexs:
-            one_ret.append(cut_images[index])
+            one_ret.append(data_images[index])
         ret.append(one_ret)
     print('finish')
     return ret
