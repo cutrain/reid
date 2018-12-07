@@ -1,5 +1,4 @@
 import cv2
-import pylab
 import imageio
 import skimage
 import numpy as np
