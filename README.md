@@ -54,7 +54,10 @@ for i in range(len(bboxes)):
 # feature extraction
 features = reid.get_feature(data_images)
 # retrieval
-index = reid.retrieval(features[0], features, k=10) # you can change features[0] into any other feature you got
+indexs = reid.retrieval(features[0], features, k=10) # you can change features[0] into any other feature you got
+find_images = []
+for index in indexs:
+	find_images.append(data_images[index])
 
 ```
 
