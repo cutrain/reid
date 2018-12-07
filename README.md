@@ -45,16 +45,19 @@ import skimage
 video = reid.get_data('/path/to/your/file')
 # generate pictures
 pictures = list(reid.get_picture(video))
-# vehicle detection
-bboxes = reid.detect_car(pictures)
-img = reid.draw_box(pictures[0], bboxes[0])
 # person detection
-person_bboxes = reid.detect(pictures)
+bboxes = list(map(reid.detect, pictures))
 img = reid.draw_box(pictures[0], bboxes[0])
+# cut images
+for i in range(len(bboxes)):
+	data_images = reid.cut_image(pictures[i], bboxes[i])
 # feature extraction
-features = reid.get_feature(cut_image(pictures, person_bboxes))
+features = reid.get_feature(data_images)
 # retrieval
-index = reid.retrieval(features[0], features, k=10) # you can change features[0] into any other feature you got
+indexs = reid.retrieval(features[0], features, k=10) # you can change features[0] into any other feature you got
+find_images = []
+for index in indexs:
+	find_images.append(data_images[index])
 
 ```
 
