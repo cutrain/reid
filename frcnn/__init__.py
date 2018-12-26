@@ -28,9 +28,9 @@ from .lib.model.faster_rcnn.resnet import resnet
 print('init vgg model')
 
 
-def __get_real_input(im, caffe=False):
+def __get_real_input(im):
     pixel_means = np.array([[[102.9801, 115.9465, 122.7717]]])
-    im_orig = im.astype(np.float32, copy=True)
+    im_orig = im.astype(np.float32)
     im_orig -= pixel_means
 
     im_shape = im_orig.shape
@@ -46,11 +46,10 @@ def __get_real_input(im, caffe=False):
         im_scale = float(MAX_SIZE) / float(im_size_max)
 
     blob = []
-    for img in im_orig:
-        blob.append(cv2.resize(img, None, None, fx=im_scale, fy=im_scale,
+    blob.append(cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
                                interpolation=cv2.INTER_LINEAR))
 
-    return np.stack(blob), np.full(len(im), im_scale)
+    return np.stack(blob), np.array([im_scale])
 
 
 def extract_boxes(dets, threshold):
@@ -59,19 +58,17 @@ def extract_boxes(dets, threshold):
 
 
 
-def detect(imgs, class_name='person'):
+def detect(img, class_name='person'):
     """
     param: ndarray (w, h, c) or (w, h)  with RGB channel
     """
     global fasterRCNN, im_data, im_info, num_boxes, gt_boxes, class_col, pascal_classes, cuda
     assert class_name in ['person'], "{} is not supported class".format(class_name)
 
-    imgs = imgs.reshape((1, *imgs.shape))
-
-    if len(imgs.shape) == 3:
-        imgs = imgs[:,:,:,np.newaxis]
-        imgs = np.concatenate((imgs, imgs, imgs), axis=3)
-    blob, im_scales = __get_real_input(imgs)
+    if len(img.shape) == 2:
+        img = img[:,:,np.newaxis]
+        img = np.concatenate((img, img, img), axis=2)
+    blob, im_scales = __get_real_input(img)
     im_info_np = np.array([
         [blob.shape[1], blob.shape[2], im_scales[0]]
     ], dtype=np.float32)
@@ -110,11 +107,9 @@ def detect(imgs, class_name='person'):
 
         pred_boxes /= im_scales[0]
 
-        # TODO: check 1 size dim
         scores = scores.squeeze()
         pred_boxes = pred_boxes.squeeze()
 
-        vis = False
         thresh = 0.05
         max_per_image = 100
         NMS = 0.3
