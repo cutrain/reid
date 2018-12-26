@@ -25,6 +25,8 @@ from .lib.model.rpn.bbox_transform import bbox_transform_inv
 from .lib.model.faster_rcnn.vgg16 import vgg16
 from .lib.model.faster_rcnn.resnet import resnet
 
+print('init vgg model')
+
 
 def __get_real_input(im, caffe=False):
     pixel_means = np.array([[[102.9801, 115.9465, 122.7717]]])
@@ -186,10 +188,10 @@ with torch.no_grad():
         gt_boxes = gt_boxes.cuda()
 
 
-    im_data = Variable(im_data)
-    im_info = Variable(im_info)
-    num_boxes = Variable(num_boxes)
-    gt_boxes = Variable(gt_boxes)
+    # im_data = Variable(im_data)
+    # im_info = Variable(im_info)
+    # num_boxes = Variable(num_boxes)
+    # gt_boxes = Variable(gt_boxes)
 
     if cuda:
         fasterRCNN.cuda()
