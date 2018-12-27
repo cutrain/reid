@@ -19,19 +19,17 @@ class get_picture(object):
         return int(self.__length / max(1, self.__frame_gap+1))
     def __iter__(self):
         pre_frame = -self.__frame_gap - 1
-        # fgbg = cv2.createBackgroundSubtractorKNN()
-        for num in range(self.__length):
+        if self.__length == 0:
+            loop = lambda x:True
+        else:
+            loop = lambda x:x<self.__length
+        num = 0
+        while loop(num):
+            num += 1
             ret, im = self.__reader.read()
-            # fgmask = fgbg.apply(cv2.GaussianBlur(im, (5,5), 0))
             if num - pre_frame > self.__frame_gap:
                 pre_frame = num
-                yield np.flip(im, 2)
-                # temp = cv2.erode(fgmask, (3,3))
-                # temp = cv2.dilate(temp, (3,3))
-                # diff_pix = np.sum(np.sign(temp))
-                # if diff_pix > pix_gap:
-                    # pre_frame = num
-                    # yield np.flip(im, 2)
+                yield num, np.flip(im, 2)
 
 if __name__ == "__main__":
     import get_data
