@@ -42,9 +42,22 @@ class RetrievalTable(object):
             return table[1].find_near_neighbors(query, threshold)
         return table[1].find_nearest_neighbor(query)
 
+def force_retrieval(query, dataset, *, k=None, threshold=None):
+    temp = np.sum((dataset-query)**2, axis=1)
+    rank = np.argsort(temp)
+    if k is not None:
+        return list(rank[:k])
+    if threshold is not None:
+        k = np.count_nonzero(temp<=threshold)
+        return list(rank[:k])
+    return list(rank)
+
+
 rt = RetrievalTable()
 
-def retrieval(query, dataset, *, k=None, threshold=None):
+
+def retrieval(query, dataset, *, k=None, threshold=None, mode='force'):
+    assert query.shape[0:] == dataset.shape[1:], "shape not match"
     global rt
     if isinstance(query, list):
         query = np.stack(query)
@@ -52,5 +65,11 @@ def retrieval(query, dataset, *, k=None, threshold=None):
         dataset = np.stack(dataset)
     query = query.astype(np.float32)
     dataset = dataset.astype(np.float32)
-    return rt.retrival(query, dataset, k=k, threshold=threshold)
+    if mode == 'falconn':
+        return rt.retrival(query, dataset, k=k, threshold=threshold)
+    elif mode == 'force':
+        return force_retrieval(query, dataset, k=k, threshold=threshold)
+    else:
+        raise NotImplemented
+
 

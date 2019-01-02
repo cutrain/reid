@@ -15,6 +15,9 @@ from .retrieval import retrieval
 from .util import draw_boxes, cut_image
 
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
+__dataset_path = os.path.join(__module_path, 'dataset')
+if not os.path.exists(__dataset_path):
+    os.mkdir(__dataset_path)
 
 
 def check_exists(paths):
@@ -64,7 +67,7 @@ def person_reid(person_paths, video_paths, k=10, progress=True):
             'bbox':[],
             'frame':[],
         }
-        database_path = os.path.join(__module_path, 'dataset', os.path.basename(path) + '.db')
+        database_path = os.path.join(__dataset_path, os.path.basename(path) + '.db')
         if os.path.exists(database_path):
             print('exists data')
             with open(database_path, 'rb') as f:
@@ -100,7 +103,7 @@ def person_reid(person_paths, video_paths, k=10, progress=True):
     print('retrievaling')
     ret = []
     for query in querys:
-        indexs = retrieval(query, dataset_feature, k=k)
+        indexs = retrieval(query, dataset_feature, k=k, mode='force')
         one_ret = []
         for index in indexs:
             one_ret.append(data_images[index])
