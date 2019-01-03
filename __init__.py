@@ -129,7 +129,7 @@ def reid(query_path, video_path,
             if len(frame_info['feature']) > 0:
                 indices = retrieval(query, frame_info['feature'], k=k, threshold=threshold)
                 image = draw_boxes(image, [frame_info['bboxes'][i] for i in indices])
-                yield image
+            yield image
         if save:
             with open(database_path, 'wb') as f:
                 f.write(pickle.dumps(exist_data))
