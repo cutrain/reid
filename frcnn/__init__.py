@@ -25,8 +25,6 @@ from .lib.model.rpn.bbox_transform import bbox_transform_inv
 from .lib.model.faster_rcnn.vgg16 import vgg16
 from .lib.model.faster_rcnn.resnet import resnet
 
-print('init vgg model')
-
 
 def __get_real_input(im):
     pixel_means = np.array([[[102.9801, 115.9465, 122.7717]]])
@@ -133,8 +131,7 @@ def detect(img, class_name='person'):
         return bboxes
 
 
-
-
+print('init vgg model')
 
 #bbox save people bbox information
 boxs = [[]]

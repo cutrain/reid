@@ -8,12 +8,6 @@ from torch.autograd import Variable
 from torchvision.models import resnet50
 
 
-print('init resnet50')
-net = resnet50(pretrained=True)
-if torch.cuda.is_available():
-    net.cuda()
-net.eval()
-
 def get_feature(img):
     assert isinstance(img, np.ndarray), 'Type {} is not supported'.format(type(img))
     global net
@@ -31,9 +25,9 @@ def get_feature(img):
         features = features.data.cpu().numpy()
         return features[0]
 
-if __name__ == "__main__":
-    from scipy.misc import imread
-    a = imread('./frcnn/images/1.jpeg')
-    a.shape = 1,*a.shape
-    b = get_feature(a)
-    print(a)
+print('init resnet50')
+net = resnet50(pretrained=True)
+if torch.cuda.is_available():
+    net.cuda()
+net.eval()
+
