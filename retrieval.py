@@ -57,12 +57,12 @@ rt = RetrievalTable()
 
 
 def retrieval(query, dataset, *, k=None, threshold=None, mode='force'):
-    assert query.shape[0:] == dataset.shape[1:], "shape not match"
     global rt
     if isinstance(query, list):
         query = np.stack(query)
     if isinstance(dataset, list):
         dataset = np.stack(dataset)
+    assert query.shape[0:] == dataset.shape[1:], "shape not match"
     query = query.astype(np.float32)
     dataset = dataset.astype(np.float32)
     if mode == 'falconn':
