@@ -4,7 +4,6 @@ import sys
 import pickle
 import numpy as np
 from tqdm import tqdm
-from scipy.misc import imread
 import imageio
 imageio.plugins.ffmpeg.download()
 print('init')
@@ -69,11 +68,14 @@ def reid(query_path, video_path,
     assert os.path.exists(query_path), "query path is not avaliable"
 
     # load query
-    query_image = imread(query_path)
+    query_image = cv2.imread(query_path)
+    query_image = query_image[:,:,::-1]
     if query_optimize:
         query_bbox = detect(query_image, class_name=class_)
-        assert len(query_bbox) > 0, "no target class object detected in query"
-        query_image = cut_image(query_image, [query_bbox[0]])[0]
+        if len(query_bbox) > 0:
+            query_image = cut_image(query_image, [query_bbox[0]])[0]
+        else:
+            print("no target class object detected in query, use origin image")
     query = get_feature(query_image)
 
     # load exist data
@@ -104,7 +106,7 @@ def reid(query_path, video_path,
         if len(frame_info['feature']) > 0:
             indices = retrieval(query, frame_info['feature'], k=k, threshold=threshold)
             image = draw_boxes(image, [frame_info['bboxes'][i] for i in indices])
-            yield image
+        yield image
 
     # query from unprocessed data
     if exist_len < frame_count:
