@@ -11,7 +11,7 @@ import scipy.io
 from .re_ranking import re_ranking
 from .model import ft_net, ft_net_dense
 
-
+print('Loading ResNet')
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
 
 batchsize = 1
@@ -37,7 +37,6 @@ model.classifier = nn.Sequential()
 
 model = model.eval()
 if use_gpu:
-    print('use gpu')
     model.cuda()
 
 def dataset_loader(image):

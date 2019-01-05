@@ -43,10 +43,9 @@ num_classes = 80
 classes = load_classes(os.path.join(__module_path, 'data/coco.names'))
 
 # Set up the neural network
-print("Loading network.....")
+print('Loading Yolo')
 model = Darknet(cfgfile)
 model.load_weights(weightsfile)
-print("Network successfully loaded")
 
 model.net_info["height"] = reso
 inp_dim = int(model.net_info["height"])
@@ -119,11 +118,6 @@ def detect(image, class_='person'):#, confidence=0.5, cfgfile='cfg/yolov3.cfg', 
         else:
             output = torch.cat((output,prediction))
 
-        # for im_num in range(1):
-            # im_id = i+ im_num
-            # objs = [classes[int(x[-1])] for x in output if int(x[0]) == im_id]
-            # print("{0:20s} {1:s}".format("Objects Detected:", " ".join(objs)))
-            # print("----------------------------------------------------------")
         i += 1
 
         if CUDA:
