@@ -70,6 +70,6 @@ def retrieval(query, dataset, *, k=None, threshold=None, mode='force'):
     elif mode == 'force':
         return force_retrieval(query, dataset, k=k, threshold=threshold)
     else:
-        raise NotImplemented
+        raise NotImplementedError
 
 

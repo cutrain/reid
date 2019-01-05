@@ -10,9 +10,8 @@ print('init')
 
 from .get_data import get_data
 from .get_image import get_image
-from .get_feature import get_feature
+from .preid.identify import get_feature, evaluate
 from .yolov3.detect import detect
-from .retrieval import retrieval
 from .util import draw_boxes, cut_image
 
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
@@ -27,7 +26,7 @@ __all__ = [
     'get_data',
     'get_image',
     'detect',
-    'retrieval',
+    'evaluate',
     'draw_boxes',
     'cut_image',
 ]
@@ -53,12 +52,11 @@ def reid_by_frame(video_capture, start_frame=0, frame_gap=0, progress=False, cla
             'bboxes':bboxes,
         }
         pimages = cut_image(image, bboxes)
-        for i in range(len(bboxes)):
-            feature = get_feature(pimages[i])
-            ret['feature'].append(feature)
+        feature = get_feature(pimages)
+        ret['feature'].extend(list(feature))
         yield frame, image, ret
 
-def reid(query_path, video_path,
+def reid(query_path, video_path, exist_object=False,
          k=None, threshold=None, start_frame=0, frame_gap=0,
          progress=True, class_='person', query_optimize=True,
          auto_backup=True, backup_rate=24, save=True, load=True):
@@ -76,7 +74,7 @@ def reid(query_path, video_path,
             query_image = cut_image(query_image, [query_bbox[0]])[0]
         else:
             print("no target class object detected in query, use origin image")
-    query = get_feature(query_image)
+    query = get_feature([query_image])
 
     # load exist data
     global __dataset_path
@@ -99,18 +97,28 @@ def reid(query_path, video_path,
 
     # query from exist data
     video = get_data(video_path)
+    video.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
     frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    for frame_info in exist_data:
+
+    for num, frame_info in enumerate(exist_data):
+        if num < start_frame:
+            continue
         ret, image = video.read()
         image = image[:,:,::-1]
         if len(frame_info['feature']) > 0:
-            indices = retrieval(query, frame_info['feature'], k=k, threshold=threshold)
+            indices = evaluate(query, frame_info['feature'], k=k, threshold=threshold)
             image = draw_boxes(image, [frame_info['bboxes'][i] for i in indices])
-        yield image
+            if len(indices) > 0:
+                yield image
+        if not exist_object:
+            yield image
 
     # query from unprocessed data
     if exist_len < frame_count:
         print('processing {}'.format(video_path))
+        if exist_len < start_frame:
+            save = False
+            exist_len = start_frame
         new_data = reid_by_frame(video,
                                 start_frame=exist_len,
                                 frame_gap=frame_gap,
@@ -128,10 +136,16 @@ def reid(query_path, video_path,
                 with open(backup_path, 'wb') as f:
                     f.write(write_data)
                 del write_data
+            if start_frame > frame:
+                print('skip', frame)
+                continue
             if len(frame_info['feature']) > 0:
-                indices = retrieval(query, frame_info['feature'], k=k, threshold=threshold)
+                indices = evaluate(query, frame_info['feature'], k=k, threshold=threshold)
                 image = draw_boxes(image, [frame_info['bboxes'][i] for i in indices])
-            yield image
+                if len(indices) > 0:
+                    yield image
+            if not exist_object:
+                yield image
         if save:
             with open(database_path, 'wb') as f:
                 f.write(pickle.dumps(exist_data))
