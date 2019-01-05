@@ -2,6 +2,10 @@ Reid sub-system
 
 # Requirement
 ```
+python3.6
+GPU Memory >= 6G
+pytorch 0.3+
+Torchvision from the source
 gcc-5
 cuda9.0
 ```
@@ -11,8 +15,12 @@ cuda9.0
 git clone https://github.com/cutrain/reid
 cd reid
 pip install -r requirements.txt
-cd frcnn/lib
-./make.sh
+cd yolov3
+wget https://pjreddie.com/media/files/yolov3.weights 
+cd ..
+git clone https://github.com/pytorch/vision
+cd vision
+python setup.py install
 ```
 
 # prepare

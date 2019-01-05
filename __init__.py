@@ -11,7 +11,7 @@ print('init')
 from .get_data import get_data
 from .get_image import get_image
 from .get_feature import get_feature
-from .frcnn import detect
+from .yolov3.detect import detect
 from .retrieval import retrieval
 from .util import draw_boxes, cut_image
 
@@ -38,7 +38,7 @@ def detect_by_frame(video_capture, start_frame=0, frame_gap=0, progress=False, c
                                start_frame=start_frame,
                                frame_gap=frame_gap)
     for frame, image in tqdm(image_iter, disable=not progress, initial=start_frame):
-        bboxes = detect(image, class_name=class_)
+        bboxes = detect(image, class_=class_)
         yield frame, image, bboxes
 
 def reid_by_frame(video_capture, start_frame=0, frame_gap=0, progress=False, class_='person'):
@@ -71,7 +71,7 @@ def reid(query_path, video_path,
     query_image = cv2.imread(query_path)
     query_image = query_image[:,:,::-1]
     if query_optimize:
-        query_bbox = detect(query_image, class_name=class_)
+        query_bbox = detect(query_image, class_=class_)
         if len(query_bbox) > 0:
             query_image = cut_image(query_image, [query_bbox[0]])[0]
         else:

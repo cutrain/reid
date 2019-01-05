@@ -4,24 +4,25 @@ import imageio
 import numpy as np
 
 def draw_boxes(img, bboxes, color=(255, 0, 0), thick=3):
-    # Make a copy of the image
     imcopy = np.copy(img)
-    # Iterate through the bounding boxes
     for bbox in bboxes:
-        # Draw a rectangle given bbox coordinates
+        # in cv2.rectangle, it's (col, row), (col, row) format
         if len(bbox) == 2:
+            # bbox[[row1,col1],[row2,col2]]
             cv2.rectangle(imcopy, (bbox[0][1], bbox[0][0]), (bbox[1][1], bbox[1][0]), color, thick)
         else:
+            # bbox[row1,row2,col1,col2]
             cv2.rectangle(imcopy, (bbox[2], bbox[0]), (bbox[3], bbox[1]), color, thick)
-    # Return the image copy with boxes drawn
     return imcopy
 
 def cut_image(img, bboxes):
     ret = []
     for bbox in bboxes:
         if len(bbox) == 2:
+            # bbox[[row1,col1],[row2,col2]]
             ret.append(img[bbox[0][0]:bbox[1][0], bbox[0][1]:bbox[1][1]])
         else:
+            # bbox[row1,row2,col1,col2]
             ret.append(img[bbox[0]:bbox[1], bbox[2]:bbox[3]])
     return ret
 
