@@ -92,17 +92,19 @@ def get_feature(images, color_mode='RGB'):
 
 
 def evaluate(query_feature, dataset_feature, k=1, threshold=0.99):
-    if len(query_feature) != 1:
-        raise NotImplementedError
     if len(dataset_feature) == 0:
         return []
+    query_feature = np.stack(query_feature)
     dataset_feature = np.stack(dataset_feature)
     q_g_dist = np.dot(query_feature, np.transpose(dataset_feature))
-    re_rank = q_g_dist[0]
     ret = []
-    idx = np.argsort(re_rank)[-k:]
-    for i in idx:
-        if re_rank[i] > threshold:
-            ret.append(i)
-    ret.reverse()
+    for i in range(len(query_feature)):
+        re_rank = q_g_dist[i]
+        idx = np.argsort(re_rank)[-k:]
+        temp = []
+        for i in idx:
+            if re_rank[i] > threshold:
+                temp.append(i)
+        temp.reverse()
+        ret.append(temp)
     return ret

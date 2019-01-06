@@ -75,18 +75,25 @@ def reid(query_path, video_path, exist_object=False,
     assert class_ in ['person'], "class {} not implemented".format(class_)
     print('checking files')
     assert os.path.exists(video_path), "video path is not avaliable"
-    assert os.path.exists(query_path), "query path is not avaliable"
+    if not isinstance(query_path, list):
+        query_path = [query_path]
+    for path in query_path:
+        assert os.path.exists(path), "query path {} is not avaliable".format(path)
 
     # load query
-    query_image = cv2.imread(query_path)
-    query_image = query_image[:,:,::-1]
-    if query_optimize:
-        query_bbox = detect(query_image, class_=class_)
-        if len(query_bbox) > 0:
-            query_image = cut_image(query_image, [query_bbox[0]])[0]
-        else:
-            print("no target class object detected in query, use origin image")
-    query = get_feature([query_image])
+    query_images = []
+    querys = []
+    for path in query_path:
+        query_image = cv2.imread(path)
+        query_image = query_image[:,:,::-1]
+        if query_optimize:
+            query_bbox = detect(query_image, class_=class_)
+            if len(query_bbox) > 0:
+                query_image = cut_image(query_image, [query_bbox[0]])[0]
+            else:
+                print("no target class object detected in query, use origin image")
+        query = list(get_feature([query_image]))
+        querys.extend(query)
 
     # load exist data
     global __dataset_path
@@ -146,9 +153,13 @@ def reid(query_path, video_path, exist_object=False,
                 frame_num, video_length, passed // 60, passed % 60, eta // 60, eta % 60, speed), end='')
 
         if len(frame_info['feature']) > 0:
-            indices = evaluate(query, frame_info['feature'], k=k, threshold=threshold)
-            image = draw_boxes(image, [frame_info['bboxes'][i] for i in indices])
-            if len(indices) > 0 or not exist_object:
+            indices = evaluate(querys, frame_info['feature'], k=k, threshold=threshold)
+            output = False
+            for i in range(len(indices)):
+                if len(indices[i]) > 0:
+                    output = True
+                image = draw_boxes(image, [frame_info['bboxes'][j] for j in indices[i]])
+            if output or not exist_object:
                 yield image
         else:
             yield image
@@ -169,3 +180,4 @@ def reid(query_path, video_path, exist_object=False,
     if os.path.exists(backup_path):
         os.remove(backup_path)
     video.release()
+
