@@ -85,7 +85,7 @@ def get_feature(images, color_mode='RGB'):
     else:
         raise NotImplementedError
 
-    dataloaders = torch.utils.data.DataLoader(my_dataloader(images), batch_size=batchsize, shuffle=False, num_workers=8)
+    dataloaders = torch.utils.data.DataLoader(my_dataloader(images), batch_size=batchsize, shuffle=False)
     with torch.no_grad():
         feature = extract_feature(model, dataloaders)
     return feature.numpy()
