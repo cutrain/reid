@@ -4,16 +4,15 @@ Reid sub-system
 ```
 python3.6
 GPU Memory >= 6G
-pytorch 0.3+
-Torchvision from the source
-gcc-5
-cuda9.0
+pytorch 0.4.0
 ```
 
 # install
 ```bash
 git clone https://github.com/cutrain/reid
 cd reid
+#python3 -m venv venv
+#source venv/bin/activate
 pip install -r requirements.txt
 cd yolov3
 wget https://pjreddie.com/media/files/yolov3.weights 
@@ -24,21 +23,41 @@ python setup.py install
 ```
 
 # prepare
-You should put the pretrained model at ./frcnn/model/faster_rcnn.pth
+you need a pre_trained model 'reid/preid/net.pth', contact me pls
 
 # cache
 Whenever you process a video, it will save in reid/dataset, with the same file name prefix.
 
-# *use* (one step)
+# find nearby person
 ```python
 import sys
 sys.path.append('/path/to/the/reid_module')
 import reid
-import skimage
 
-query_path = 'a.jpg'
-video_path = 'a.mp4'
-images_iter = reid.reid(query_path, video_path, k=10)
+query_path = 'data/a.jpg'
+video_path = 'data/a.mp4'
+nearby_person = reid.nearby(query_path, video_path, threshold=0.95)
+query_image = cv2.imread(query_person)[:,:,::-1]
+query_person = reid.cut_image(query_image, reid.detect(query_image)[0])[0]
+images_iter = reid.reid([query_path, nearby_person], video_path, threshold=0.95, optimize_query=False)
+for image in images_iter:
+	cv2.imshow('a', image)
+	k = cv2.waitKey(20)
+	if k == ord('q'):
+		break
+cv2.destroyAllWindows()
+```
+
+# *use* (one step)
+```python
+import cv2
+import sys
+sys.path.append('/path/to/the/reid_module')
+import reid
+
+query_path = 'data/a.jpg'
+video_path = 'data/a.mp4'
+images_iter = reid.reid(query_path, video_path, exist_object=True, threshold=0.95, start_frame=500, frame_count=1000, optimize_query=False)
 for image in images_iter:
 	image = image[:,:,::-1] # or numpy.flip(image, 2)
 	cv2.imshow('a', image)
@@ -54,7 +73,6 @@ cv2.destroyAllwindows()
 import sys
 sys.path.append('/path/to/the/reid_module')
 import reid
-import skimage
 
 # read video
 video = reid.get_data('/path/to/your/file')
@@ -70,7 +88,7 @@ for i in range(len(bboxes)):
 # feature extraction
 features = reid.get_feature(data_images)
 # retrieval
-indexs = reid.retrieval(features[0], features, k=10) # you can change features[0] into any other feature you got
+indexs = reid.evaluate(features[0], features, threshold=0.95) # you can change features[0] into any other feature you got
 find_images = []
 for index in indexs:
 	find_images.append(data_images[index])
