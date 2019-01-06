@@ -148,11 +148,11 @@ def detect(image, class_='person'):#, confidence=0.5, cfgfile='cfg/yolov3.cfg', 
         cls = int(x[-1])
         if classes[cls] != class_:
             return None
-        c1 = tuple(x[1:3].int())
-        c2 = tuple(x[3:5].int())
+        c1 = tuple(x[1:3].int().cpu().numpy())
+        c2 = tuple(x[3:5].int().cpu().numpy())
         ret = []
-        ret.extend(sorted([c1[1], c2[1]]))
-        ret.extend(sorted([c1[0], c2[0]]))
+        ret.extend(sorted([int(c1[1]), int(c2[1])]))
+        ret.extend(sorted([int(c1[0]), int(c2[0])]))
         return ret
 
 
