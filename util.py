@@ -1,7 +1,56 @@
 import cv2
+import math
 import torch
 import imageio
 import numpy as np
+
+def calc_box_area_diff(box1, box2):
+    width1 = width2 = height1 = height2 = None
+    if len(box1) == 2:
+        width1 = abs(box1[0][0] - box1[1][0])
+        height1 = abs(box1[0][1] - box1[1][1])
+        width2 = abs(box2[0][0] - box2[1][0])
+        height2 = abs(box2[0][1] - box2[1][1])
+    else:
+        width1 = abs(box1[0] - box1[1])
+        height1 = abs(box1[2] - box1[3])
+        width2 = abs(box2[0] - box2[1])
+        height2 = abs(box2[2] - box2[3])
+    area1 = width1 * height1
+    area2 = width2 * height2
+    return (area1 - area2)**2 / (area1**2 + area2**2)
+
+def calc_box_dist(box1, box2, mode='center'):
+    assert mode in ['center', 'center_relative'], "mode {} not implemented".format(mode)
+    if len(box1) == 2:
+        l1 = min(box1[0][0], box1[1][0])
+        r1 = max(box1[0][0], box1[1][0])
+        b1 = min(box1[0][1], box1[1][1])
+        t1 = max(box1[0][1], box1[1][1])
+        l2 = min(box2[0][0], box2[1][0])
+        r2 = max(box2[0][0], box2[1][0])
+        b2 = min(box2[0][1], box2[1][1])
+        t2 = max(box2[0][1], box2[1][1])
+    else:
+        l1 = min(box1[0], box1[1])
+        r1 = max(box1[0], box1[1])
+        b1 = min(box1[2], box1[3])
+        t1 = max(box1[2], box1[3])
+        l2 = min(box2[0], box2[1])
+        r2 = max(box2[0], box2[1])
+        b2 = min(box2[2], box2[3])
+        t2 = max(box2[2], box2[3])
+    center1_x = (l1 + r1) / 2
+    center1_y = (b1 + t1) / 2
+    center2_x = (l2 + r2) / 2
+    center2_y = (b2 + t2) / 2
+    center_dist = math.sqrt((center1_x - center2_x)**2 + (center1_y - center2_y)**2)
+    if mode == 'center':
+        return center_dist
+    elif mode == 'center_relative':
+        return center_dist / (r1-l1 + r2-l2 + 1e-3)
+    else:
+        raise NotImplementedError
 
 def draw_boxes(img, bboxes, color=(255, 0, 0), thick=3):
     imcopy = np.copy(img)
