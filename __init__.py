@@ -75,17 +75,31 @@ def reid(query_path, video_path, exist_object=False,
     assert class_ in ['person'], "class {} not implemented".format(class_)
     print('checking files')
     assert os.path.exists(video_path), "video path is not avaliable"
-    if not isinstance(query_path, list):
-        query_path = [query_path]
-    for path in query_path:
-        assert os.path.exists(path), "query path {} is not avaliable".format(path)
 
-    # load query
+    # check query type
     query_images = []
     querys = []
-    for path in query_path:
-        query_image = cv2.imread(path)
-        query_image = query_image[:,:,::-1]
+    if not isinstance(query_path, list):
+        if isinstance(query_path, str):
+            query_path = [query_path]
+        elif isinstance(query_path, np.ndarray):
+            image_query = True
+            query_images.append(query_path)
+        else:
+            raise NotImplementedError
+    else:
+        for obj in query_path:
+            if isinstance(obj, str):
+                query_image = cv2.imread(obj)
+                query_image = query_image[:,:,::-1]
+                query_images.append(query_image)
+            elif isinstance(obj, np.ndarray):
+                query_images.append(obj)
+            else:
+                raise NotImplementedError
+
+    # load query feature
+    for query_image in query_images:
         if query_optimize:
             query_bbox = detect(query_image, class_=class_)
             if len(query_bbox) > 0:
