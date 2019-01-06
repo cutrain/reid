@@ -146,7 +146,7 @@ def reid(query_path, video_path, exist_object=False,
     for frame_num in range(start_frame, video_length):
         # get frame info
         ret, image = video.read()
-        image = image[:,:,::-1]
+        image = np.flip(image, 2)
         if frame_num in exist_data:
             frame_info = exist_data[frame_num]
         else:
@@ -176,7 +176,7 @@ def reid(query_path, video_path, exist_object=False,
             for i in range(len(indices)):
                 if len(indices[i]) > 0:
                     output = True
-                image = draw_boxes(image, [frame_info['bboxes'][j] for j in indices[i]])
+                image = draw_boxes(image, [frame_info['bboxes'][j] for j in indices[i]], copy=False)
             if output or not exist_object:
                 yield image
         else:
