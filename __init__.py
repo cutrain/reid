@@ -179,7 +179,7 @@ def reid(query_path, video_path, exist_object=False,
                 image = draw_boxes(image, [frame_info['bboxes'][j] for j in indices[i]], copy=False)
             if output or not exist_object:
                 yield image
-        else:
+        elif not exist_object:
             yield image
 
         # save data
