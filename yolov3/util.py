@@ -1,12 +1,8 @@
-
-from __future__ import division
-
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F 
 from torch.autograd import Variable
 import numpy as np
-import cv2 
 # import matplotlib.pyplot as plt
 from .bbox import bbox_iou
 
@@ -83,6 +79,7 @@ def load_classes(namesfile):
     return names
 
 def get_im_dim(im):
+    import cv2
     im = cv2.imread(im)
     w,h = im.shape[1], im.shape[0]
     return w,h
@@ -101,10 +98,10 @@ def write_results(prediction, confidence, num_classes, nms = True, nms_conf = 0.
     prediction = prediction*conf_mask
     
 
-    try:
-        ind_nz = torch.nonzero(prediction[:,:,4]).transpose(0,1).contiguous()
-    except:
-        return 0
+    # try:
+        # ind_nz = torch.nonzero(prediction[:,:,4]).transpose(0,1).contiguous()
+    # except:
+        # return 0
     
     
     box_a = prediction.new(prediction.shape)

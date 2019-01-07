@@ -1,6 +1,4 @@
 import cv2
-import imageio
-import skimage
 import numpy as np
 import pandas as pd
 from .util import to_numpy

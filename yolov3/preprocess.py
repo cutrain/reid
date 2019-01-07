@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import numpy as np
 import cv2 
 # import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw
 
 from .util import count_parameters as count
 from .util import convert2cpu as cpu
@@ -45,6 +44,7 @@ def prep_image(img, inp_dim):
     return img_, orig_im, dim
 
 def prep_image_pil(img, network_dim):
+    from PIL import Image, ImageDraw
     orig_im = Image.open(img)
     img = orig_im.convert('RGB')
     dim = img.size

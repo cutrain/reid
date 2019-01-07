@@ -1,34 +1,13 @@
-from __future__ import division
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-import cv2
-import argparse
 import os
 import sys
-import os.path as osp
-import pandas as pd
-import random
-import pickle as pkl
-import itertools
 
 from .util import *
 from .darknet import Darknet
 from .preprocess import inp_to_image, prep_image
-
-def get_test_input(input_dim, CUDA):
-    img = cv2.imread("dog-cycle-car.png")
-    img = cv2.resize(img, (input_dim, input_dim))
-    img_ =  img[:,:,::-1].transpose((2,0,1))
-    img_ = img_[np.newaxis,:,:,:]/255.0
-    img_ = torch.from_numpy(img_).float()
-    img_ = Variable(img_)
-
-    if CUDA:
-        img_ = img_.cuda()
-    num_classes
-    return img_
 
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
 
@@ -58,7 +37,7 @@ if CUDA:
 # Set the model in evaluation mode
 model.eval()
 
-def detect(image, class_='person'):#, confidence=0.5, cfgfile='cfg/yolov3.cfg', weightsfile='yolov3.weights', reso='416', class_='person'):
+def detect(image, class_='person'):
     global inp_dim, model, classes, num_classes, CUDA, confidence, nms_thresh
 
 
@@ -75,7 +54,6 @@ def detect(image, class_='person'):#, confidence=0.5, cfgfile='cfg/yolov3.cfg', 
     i = 0
 
     write = False
-    # model(get_test_input(inp_dim, CUDA), CUDA)
 
     objs = {}
 
@@ -120,8 +98,8 @@ def detect(image, class_='person'):#, confidence=0.5, cfgfile='cfg/yolov3.cfg', 
 
         i += 1
 
-        if CUDA:
-            torch.cuda.synchronize()
+        # if CUDA:
+            # torch.cuda.synchronize()
 
     try:
         output

@@ -9,7 +9,7 @@ from PIL import Image
 
 import scipy.io
 from .re_ranking import re_ranking
-from .model import ft_net, ft_net_dense
+from .model import ft_net
 
 print('Loading ResNet')
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
@@ -21,7 +21,7 @@ use_gpu = torch.cuda.is_available()
 data_transforms = transforms.Compose([
         transforms.Resize((256,128), interpolation=3),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
 def load_network(network):
@@ -35,43 +35,47 @@ model = load_network(model_structure)
 model.model.fc = nn.Sequential()
 model.classifier = nn.Sequential()
 
-model = model.eval()
 if use_gpu:
     model.cuda()
+model = model.eval()
 
 def dataset_loader(image):
     return data_transforms(Image.fromarray(image))
 
 def my_dataloader(images):
-    return list(map(dataset_loader, images))
+    return torch.stack(list(map(dataset_loader, images)))
 
 def fliplr(img):
     '''flip horizontal'''
     inv_idx = torch.arange(img.size(3)-1,-1,-1).long()  # N x C x H x W
+    global use_gpu
+    if use_gpu:
+        inv_idx = inv_idx.cuda()
     img_flip = img.index_select(3,inv_idx)
     return img_flip
 
-def extract_feature(model,dataloaders):
-    features = torch.FloatTensor()
-    count = 0
-    for data in dataloaders:
-        img = data
-        n, c, h, w = img.size()
-        count += n
-        ff = torch.FloatTensor(n,2048).zero_()
-        for i in range(2):
-            if(i==1):
-                img = fliplr(img)
-            input_img = Variable(img.cuda())
-            outputs = model(input_img)
-            f = outputs.data.cpu().float()
-            ff = ff+f
-        # norm feature
-        fnorm = torch.norm(ff, p=2, dim=1, keepdim=True)
-        ff = ff.div(fnorm.expand_as(ff))
 
-        features = torch.cat((features,ff), 0)
-    return features
+def extract_feature(model,data):
+    features = torch.FloatTensor()
+    img = data
+    global use_gpu
+    if use_gpu:
+        img = img.cuda()
+    n, c, h, w = img.size()
+    ff = torch.FloatTensor(n,2048).zero_()
+    for i in range(2):
+        if(i==1):
+            img = fliplr(img)
+        input_img = Variable(img)
+        outputs = model(input_img)
+        f = outputs.data.cpu().float()
+        ff = ff+f
+    # norm feature
+    fnorm = torch.norm(ff, p=2, dim=1, keepdim=True)
+    ff = ff.div(fnorm.expand_as(ff))
+
+    return ff
+
 
 def get_feature(images, color_mode='RGB'):
     global data_transforms, model
@@ -85,9 +89,8 @@ def get_feature(images, color_mode='RGB'):
     else:
         raise NotImplementedError
 
-    dataloaders = torch.utils.data.DataLoader(my_dataloader(images), batch_size=batchsize, shuffle=False)
     with torch.no_grad():
-        feature = extract_feature(model, dataloaders)
+        feature = extract_feature(model, my_dataloader(images))
     return feature.numpy()
 
 

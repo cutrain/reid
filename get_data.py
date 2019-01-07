@@ -5,7 +5,6 @@ def get_data(path, input_type='local'):
     assert input_type in ['local', 'ftp', 'sql', 'network'], "type %s not in list" % input_type
     if input_type == 'local':
         video = cv2.VideoCapture(path)
-        # video = imageio.get_reader(path, 'ffmpeg')
     else:
         raise(Exception("type %s not realize" % input_type))
 

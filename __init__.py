@@ -5,8 +5,6 @@ import time
 import pickle
 import numpy as np
 from tqdm import tqdm
-import imageio
-imageio.plugins.ffmpeg.download()
 print('init')
 
 from .get_data import get_data

@@ -1,7 +1,6 @@
 import cv2
 import math
 import torch
-import imageio
 import numpy as np
 
 def calc_box_area_diff(box1, box2):
@@ -102,6 +101,7 @@ def cut_image(img, bboxes):
     return ret
 
 def to_numpy(tensor):
+    import imageio
     if torch.is_tensor(tensor):
         return tensor.cpu().numpy()
     elif type(tensor) == imageio.core.util.Array:
