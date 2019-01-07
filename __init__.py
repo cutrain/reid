@@ -280,6 +280,8 @@ def nearby(query_path, video_path, exist_object=False,
     for frame_num in range(start_frame, video_length):
         # get frame info
         ret, image = video.read()
+        if not ret:
+            break
         image = image[:,:,::-1]
         if frame_num in exist_data:
             frame_info = exist_data[frame_num]
