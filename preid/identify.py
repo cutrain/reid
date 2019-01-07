@@ -82,8 +82,7 @@ def get_feature(images, color_mode='RGB'):
     if len(images) == 0:
         return np.array([])
     if color_mode == 'BGR':
-        images = list(map(np.flip, images, [1]*len(images)))
-        images = np.flip(images, 1)
+        images = list(map(np.flip, images, [2]*len(images)))
     elif color_mode == 'RGB':
         pass
     else:
