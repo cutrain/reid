@@ -338,3 +338,18 @@ def nearby(query_path, video_path, exist_object=False,
         os.remove(backup_path)
     video.release()
     return nearby_person
+
+
+def camreid(*args, **kwargs):
+    from queue import Queue
+    from threading import Thread
+    from .cam import webcam
+    cam_size = kwargs.pop('cam_size', (640,480))
+    syn = kwargs.pop('syn', False)
+    cam_data_queue = Queue()
+    worker = Thread(target=webcam, args=(cam_data_queue, cam_size[0], cam_size[1], syn), daemon=True)
+    worker.start()
+    for i in reid(*args, **kwargs):
+        cam_data_queue.put(i)
+    cam_data_queue.join()
+
