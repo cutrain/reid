@@ -351,5 +351,7 @@ def camreid(*args, **kwargs):
     worker.start()
     for i in reid(*args, **kwargs):
         cam_data_queue.put(i)
-    cam_data_queue.join()
+    while not cam_data_queue.empty():
+        time.sleep(1)
+
 
