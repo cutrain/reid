@@ -205,7 +205,8 @@ def reid(query_path, video_path, exist_object=False,
 def nearby(query_path, video_path, exist_object=False,
          k=1, threshold=0.95, start_frame=0, frame_gap=0, frame_count=-1,
          progress=True, class_='person', query_optimize=True,
-         auto_backup=True, backup_rate=24, save=True, load=True):
+         auto_backup=True, backup_rate=24, save=True, load=True,
+         person_threshold=0.1):
     assert class_ in ['person'], "class {} not implemented".format(class_)
     print('checking files')
     assert os.path.exists(video_path), "video path is not avaliable"
@@ -271,7 +272,7 @@ def nearby(query_path, video_path, exist_object=False,
     frame_counter = [start_frame]
 
     # -----
-    nearby_person = None
+    nearby_person = []
     relative_dist = 100
     # -----
 
@@ -314,10 +315,8 @@ def nearby(query_path, video_path, exist_object=False,
                             continue
                         box_area_diff = calc_box_area_diff(bbox[i], bbox[indices[0]])
                         box_relative_dist = calc_box_dist(bbox[i], bbox[indices[0]], mode='center_relative')
-                        if box_area_diff * box_relative_dist < relative_dist:
-                            print('update at frame {}: '.format(frame_num), relative_dist, box_area_diff * box_relative_dist)
-                            nearby_person = cut_image(image, [bbox[i]])[0]
-                            relative_dist = box_area_diff * box_relative_dist
+                        if box_area_diff * box_relative_dist < person_threshold:
+                            nearby_person.append(cut_image(image, [bbox[i]])[0])
 
         # save data
         iter_gap += 1
