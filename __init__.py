@@ -1,3 +1,16 @@
+__all__ = [
+    'auto_mark',
+    'detect_by_frame',
+    'reid_by_frame',
+    'nearby',
+    'reid',
+    'get_data',
+    'get_image',
+    'detect',
+    'evaluate',
+    'draw_boxes',
+    'cut_image',
+]
 import os
 import cv2
 import sys
@@ -11,24 +24,13 @@ from .get_data import get_data
 from .get_image import get_image
 from .preid.identify import get_feature, evaluate
 from .yolov3.detect import detect
-from .util import draw_boxes, cut_image, calc_box_area_diff, calc_box_dist
+from .util import draw_boxes, cut_image, calc_box_area_diff, calc_box_dist, TimeCounter
 
 __module_path = os.path.dirname(sys.modules[__package__].__file__)
 __dataset_path = os.path.join(__module_path, 'dataset')
 if not os.path.exists(__dataset_path):
     os.mkdir(__dataset_path)
 
-__all__ = [
-    'detect_by_frame',
-    'reid_by_frame',
-    'reid',
-    'get_data',
-    'get_image',
-    'detect',
-    'evaluate',
-    'draw_boxes',
-    'cut_image',
-]
 
 def detect_by_frame(video_capture, start_frame=0, frame_count=-1, frame_gap=0, progress=False, class_='person'):
     assert class_ in ['person'], "class {} not implemented".format(class_)
@@ -202,6 +204,7 @@ def reid(query_path, video_path, exist_object=False,
     video.release()
 
 
+
 def nearby(query_path, video_path, exist_object=False,
          k=1, threshold=0.95, start_frame=0, frame_gap=0, frame_count=-1,
          progress=True, class_='person', query_optimize=True,
@@ -353,5 +356,58 @@ def camreid(*args, **kwargs):
         cam_data_queue.put(i)
     while not cam_data_queue.empty():
         time.sleep(1)
+
+def auto_mark(path, threshold=0.99, class_='person'):
+    if not os.path.exists(path):
+        print('path not exists')
+        raise AttributeError
+    frame_count = 0
+    result_count = 0
+    now_id = [0]
+    ret_data = {
+        'video_name':path,
+        'result':[],
+    }
+    result = ret_data['result']
+    history_data = {
+        'id':[],
+        'feature':[],
+    }
+
+    video = get_data(path)
+    video_length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    time_counter = TimeCounter(video_length=video_length)
+
+    while True:
+        print(frame_count)
+        ret, image = video.read()
+        if not ret:
+            break
+        image = np.flip(image, 2)
+        frame_info = reid_one_image(image, class_=class_)
+        object_num = len(frame_info['feature'])
+        result_count += object_num
+        frame_result = evaluate(frame_info['feature'], history_data['feature'], threshold=threshold)
+        def get_id(x, now_id, history_data):
+            if len(x)==0:
+                now_id[0] += 1
+                return now_id[0]
+            return history_data['id'][x[0]]
+        this_frame = {
+            'object_num':object_num,
+            'person_id':list(map(lambda x:get_id(x,now_id,history_data), frame_result)),
+            'coordinate_matrix':frame_info['bboxes'],
+        }
+        history_data['feature'].extend(frame_info['feature'])
+        history_data['id'].extend(this_frame['person_id'])
+        result.append({
+            'frame_index':frame_count,
+            'frame_result':this_frame,
+        })
+        frame_count += 1
+        time_counter(frame_count)
+    end = time.time()
+    print('proccess {} time : {}'.format(path, end-start))
+    return ret_data
 
 

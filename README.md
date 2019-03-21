@@ -48,6 +48,13 @@ for image in images_iter:
 cv2.destroyAllWindows()
 ```
 
+# *person reid platform* ***(HERE!!)***
+```python
+import reid
+path = './a.avi'
+result = reid.auto_mark(path, threshold=0.99)
+```
+
 # *use* (one step)
 ```python
 import cv2

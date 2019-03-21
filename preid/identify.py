@@ -95,7 +95,9 @@ def get_feature(images, color_mode='RGB'):
 
 def evaluate(query_feature, dataset_feature, k=1, threshold=0.99):
     if len(dataset_feature) == 0:
-        return []
+        return [[] for i in range(len(query_feature))]
+    if len(query_feature) == 0:
+        return [[] for i in range(len(query_feature))]
     query_feature = np.stack(query_feature)
     dataset_feature = np.stack(dataset_feature)
     q_g_dist = np.dot(query_feature, np.transpose(dataset_feature))

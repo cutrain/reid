@@ -135,3 +135,25 @@ def cwh2hwc(arr):
     else:
         assert False
 
+import time
+class TimeCounter:
+    def __init__(self, start_frame=0, video_length=0, counter_min_gap=1):
+        self.video_length = video_length
+        self.counter_min_gap = 1
+        self.eta_cnt = 10
+        self.start = time.time()
+        self.time_counter = [self.start]
+        self.frame_counter = [start_frame]
+
+    def __call__(self, frame_num=0):
+        if time.time() - self.time_counter[-1] > self.counter_min_gap:
+            self.time_counter.append(time.time())
+            self.frame_counter.append(frame_num)
+            if len(self.time_counter) > self.eta_cnt:
+                self.time_counter = self.time_counter[1:]
+                self.frame_counter = self.frame_counter[1:]
+            speed = (self.frame_counter[-1] - self.frame_counter[0]) / (self.time_counter[-1] - self.time_counter[0] + 1e-2)
+            eta = (self.video_length - frame_num) / (speed + 1e-2)
+            passed = self.time_counter[-1] - self.start
+            print('\rprogress:[{}/{}] time:[{:.0f}m {:.0f}s/{:.0f}m {:.0f}s] {:.1f}iters/s'.format(
+                frame_num, self.video_length, passed // 60, passed % 60, eta // 60, eta % 60, speed), end='')
