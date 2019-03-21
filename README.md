@@ -60,9 +60,12 @@ result = reid.auto_mark(path, threshold=0.99)
   'video_name':'./a.avi',
   'result':[
     {
-      'object_num':1,
-      'coordinate_matrix':[[10,245,20,144]], # using 'numpy' like "image[10:245,20:144]"
-      'id':[1]
+      'frame_index':1,
+      'frame_result':{
+        'object_num':1,
+        'coordinate_matrix':[[10,245,20,144]], # using 'numpy' like "image[10:245,20:144]"
+        'id':[1]
+      }
     },
   ]
 }
