@@ -54,6 +54,20 @@ import reid
 path = './a.avi'
 result = reid.auto_mark(path, threshold=0.99)
 ```
+## result format
+```json
+{
+	'video_name':'./a.avi',
+	'result':[
+		{
+			'object_num':1,
+			'coordinate_matrix':[[10,245,20,144]], # using 'numpy' like "image[10:245,20:144]"
+			'id':[1],
+		},
+	]
+}
+```
+
 
 # *use* (one step)
 ```python
