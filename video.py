@@ -63,7 +63,6 @@ def func_control(req):
         thread_monitor = None
         processing_manager.join()
         print('Function Stoped')
-        processing_manager = None
         return True
     except Exception:
         return False
@@ -152,6 +151,7 @@ def solve_reid(path):
         print('Result send : {}'.format(ret))
         socket.send_json(ret)
     thread_monitor = None
+    pulse_thread.join()
 
 
 
