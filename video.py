@@ -2,6 +2,7 @@ import cv2
 import zmq
 import time
 import json
+import queue
 import binascii
 import threading
 import multiprocessing
@@ -87,12 +88,12 @@ def data_load(filepath, eta):
 
 def pulse(pack):
     global pulse_port
+    global thread_monitor
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     socket.bind('tcp://*:'+pulse_port)
     start = time.time()
     while True:
-        global thread_monitor
         if thread_monitor is None:
             break
         time.sleep(5)
@@ -115,10 +116,35 @@ def pulse(pack):
         print('Pulse send : {}'.format(ret))
         socket.send_json(ret)
 
+def result_send(Q, path):
+    global result_port
+    global thread_monitor
+    context = zmq.Context()
+    socket = context.socket(zmq.PUB)
+    socket.bind('tcp://*:'+ result_port)
+    while True:
+        if thread_monitor is None:
+            break
+        try:
+            i = Q.get(timeout=3)
+        except queue.Empty:
+            continue
+        ret = {
+            'head':'data',
+            'alg_id':2000,
+            'file':path,
+            'frame_index':i['frame_index'],
+            'frame_result':i['frame_result'],
+        }
+        ret['chsum'] = checksum(ret)
+        print('Result send : {}'.format(ret))
+        socket.send_json(ret)
+
+
 def solve_reid(path):
+    global thread_monitor
     print('solve reid: create')
     iter = auto_mark_iter(path)
-    print('solve reid: created')
     pulse_pack = {
         'progress':0,
         'total':len(iter),
@@ -127,32 +153,21 @@ def solve_reid(path):
     pulse_thread = threading.Thread(target=pulse, args=(pulse_pack,))
     pulse_thread.daemon = True
     pulse_thread.start()
-    print('solve reid: pulse start running')
-    # TODO: pulse get result
-    global result_port
-    context = zmq.Context()
-    socket = context.socket(zmq.PUB)
-    socket.bind('tcp://*:'+ result_port)
+
+    Q = queue.Queue()
+    result_thread = threading.Thread(target=result_send, args=(Q,path))
+    result_thread.daemon = True
+    result_thread.start()
     print('solve reid: start iter')
-    global thread_monitor
     for i in iter:
         if thread_monitor is None:
             print('solve reid: terminated')
             break
-        ret = {
-            'head':'data',
-            'alg_id':2000,
-            'file':path,
-            'frame_index':i['frame_index'],
-            'frame_result':i['frame_result'],
-        }
+        Q.put(i)
         pulse_pack['progress'] += 1
-        ret['chsum'] = checksum(ret)
-        print('Result send : {}'.format(ret))
-        socket.send_json(ret)
     thread_monitor = None
     pulse_thread.join()
-
+    result_thread.join()
 
 
 def func_cmd(req):
