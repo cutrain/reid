@@ -5,9 +5,9 @@ import json
 import binascii
 import threading
 import multiprocessing
-
-DEBUG = True
+DEBUG = False
 processing_manager = None
+thread_monitor = None
 
 function_port = '5565'
 control_port = '5566'
@@ -35,7 +35,7 @@ if DEBUG:
         def __iter__(self):
             yield from self.__next__()
 else:
-    from reid import auto_mark_iter
+    from . import auto_mark_iter
 
 def checksum(ret):
     return binascii.crc32(json.dumps(ret, sort_keys=True).encode('utf-8'))
@@ -57,9 +57,11 @@ def func_control(req):
             return False
         global processing_manager
         print('5', processing_manager)
-        if processing_manager is None:
+        global thread_monitor
+        if thread_monitor is None:
             return False
-        processing_manager.terminate()
+        thread_monitor = None
+        processing_manager.join()
         print('Function Stoped')
         processing_manager = None
         return True
@@ -91,6 +93,9 @@ def pulse(pack):
     socket.bind('tcp://*:'+pulse_port)
     start = time.time()
     while True:
+        global thread_monitor
+        if thread_monitor is None:
+            break
         time.sleep(5)
         end = time.time()
         passed = end-start
@@ -112,7 +117,9 @@ def pulse(pack):
         socket.send_json(ret)
 
 def solve_reid(path):
+    print('solve reid: create')
     iter = auto_mark_iter(path)
+    print('solve reid: created')
     pulse_pack = {
         'progress':0,
         'total':len(iter),
@@ -121,12 +128,18 @@ def solve_reid(path):
     pulse_thread = threading.Thread(target=pulse, args=(pulse_pack,))
     pulse_thread.daemon = True
     pulse_thread.start()
+    print('solve reid: pulse start running')
     # TODO: pulse get result
     global result_port
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     socket.bind('tcp://*:'+ result_port)
+    print('solve reid: start iter')
+    global thread_monitor
     for i in iter:
+        if thread_monitor is None:
+            print('solve reid: terminated')
+            break
         ret = {
             'head':'data',
             'alg_id':2000,
@@ -138,6 +151,7 @@ def solve_reid(path):
         ret['chsum'] = checksum(ret)
         print('Result send : {}'.format(ret))
         socket.send_json(ret)
+    thread_monitor = None
 
 
 
@@ -173,12 +187,14 @@ def func_cmd(req):
         else:
             print('7')
             cap_test.release()
+        global thread_monitor
         if processing_manager is not None:
             print('8')
-            processing_manager.terminate()
-            processing_manager = None
+            thread_monitor = None
+            processing_manager.join()
         print('9')
-        processing_manager = multiprocessing.Process(target=solve_reid, args=(path,))
+        thread_monitor = True
+        processing_manager = threading.Thread(target=solve_reid, args=(path,))
         processing_manager.daemon = True
         processing_manager.start()
         ret.update({
@@ -232,19 +248,15 @@ def control_server():
         socket.send_json(ret)
 
 
-if __name__ == '__main__':
-    try:
-        server_list = [func_server, control_server]
-        arg_list = [(), ()]
-        thread_list = []
-        for i,j in zip(server_list, arg_list):
-            server = threading.Thread(target=i, args=j)
-            server.daemon = True
-            thread_list.append(server)
-        for i in thread_list:
-            i.start()
-        for i in thread_list:
-            i.join()
-    except KeyboardInterrupt:
-        for i in thread_list:
-            i.terminate()
+def runserver():
+    server_list = [func_server, control_server]
+    arg_list = [(), ()]
+    thread_list = []
+    for i,j in zip(server_list, arg_list):
+        server = threading.Thread(target=i, args=j)
+        server.daemon = True
+        thread_list.append(server)
+    for i in thread_list:
+        i.start()
+    for i in thread_list:
+        i.join()

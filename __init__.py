@@ -362,7 +362,6 @@ def auto_mark(path, threshold=0.99, class_='person'):
         print('path not exists')
         raise AttributeError
     frame_count = 0
-    result_count = 0
     now_id = [0]
     ret_data = {
         'video_name':path,
@@ -386,7 +385,6 @@ def auto_mark(path, threshold=0.99, class_='person'):
         image = np.flip(image, 2)
         frame_info = reid_one_image(image, class_=class_)
         object_num = len(frame_info['feature'])
-        result_count += object_num
         frame_result = evaluate(frame_info['feature'], history_data['feature'], threshold=threshold)
         def get_id(x, now_id, history_data):
             if len(x)==0:
@@ -410,4 +408,48 @@ def auto_mark(path, threshold=0.99, class_='person'):
     print('proccess {} time : {}'.format(path, end-start))
     return ret_data
 
+class auto_mark_iter:
+    def __init__(self, path, class_='person', threshold=0.99):
+        self._path = path
+        self._video_cap = get_data(path)
+        self._class_ = class_
+        self._threshold = threshold
 
+        self._len = int(self._video_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self._frame_count = 0
+        self._history_data = {
+            'feature':[],
+            'id':[],
+        }
+        self._now_id = [0]
+
+    def __len__(self):
+        return self._len
+
+    def __iter__(self):
+        while True:
+            print('now frame', self._frame_count)
+            ret, image = self._video_cap.read()
+            if not ret:
+                break
+            image = np.flip(image, 2)
+            frame_info = reid_one_image(image, class_=self._class_)
+            object_num = len(frame_info['feature'])
+            frame_result = evaluate(frame_info['feature'], self._history_data['feature'], threshold=self._threshold)
+            def get_id(x, now_id, history_data):
+                if len(x) == 0:
+                    now_id[0] += 1
+                    return now_id[0]
+                return history_data['id'][x[0]]
+            this_frame = {
+                'object_num':object_num,
+                'coordinate_matrix':frame_info['bboxes'],
+                'id':list(map(lambda x:get_id(x, self._now_id, self._history_data), frame_result)),
+            }
+            self._history_data['feature'].extend(frame_info['feature'])
+            self._history_data['id'].extend(this_frame['id'])
+            self._frame_count += 1
+            yield {
+                'frame_index':self._frame_count,
+                'frame_result':this_frame,
+            }
