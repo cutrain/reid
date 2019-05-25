@@ -119,3 +119,20 @@ for index in indexs:
 
 ```
 
+# *reid WEB*
+```python
+import time
+from reid.interface import reidCore
+core = reidCore()
+core.multicam('task1', './1.png', ['./a.avi', './b.avi'], ['./aa.avi', './bb.avi'])
+core.nearperson('task2', './1.png', 'a.avi', 'aa.avi')
+time.sleep(3)
+if core.sample('task1', './a.gif'):
+	print('generate gif success')
+else:
+	print('generate gif failed')
+if core.sample('task2', './b.gif'):
+	print('generate gif success')
+else:
+	print('generate gif failed')
+```
