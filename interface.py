@@ -27,11 +27,29 @@ class reidCore:
             temp[i] = cv2.resize(temp[i], (size[1], size[0]))
         self.__sample[taskname] = temp
 
+    @staticmethod
+    def save_video(images, output_path):
+        fourcc = 'X264'
+        fps = 30
+        shape = images[0].shape
+        width = shape[1]
+        height = shape[0]
+        videoWriter = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*fourcc), fps, (width, height))
+        cnt = 0
+        tot = len(images)
+        for image in images:
+            videoWriter.write(image[:,:,::-1])
+            cnt += 1
+            if cnt % 150:
+                print('video save {}/{}'.format(cnt, tot))
+        videoWriter.release()
+
     def __multicam(self, taskname, query_path, video_paths, output_paths):
         print('multicam task "{}" thread start running : {} {} {}'.format(
             taskname, query_path, video_paths, output_paths
         ))
-        for video_path in video_paths:
+        for i in range(len(video_paths)):
+            video_path = video_paths[i]
             print('multicam task "{}" solving {}'.format(taskname, video_path))
             self.__tasks[taskname] = []
             self.__tasks_len[taskname] = 0
@@ -40,10 +58,12 @@ class reidCore:
                 self.__tasks[taskname].append(i)
                 self.__tasks_len[taskname] += 1
             self.gen_sample(taskname)
+            print('multicam task "{}":{} solved!'.format(taskname, video_path))
+            self.save_video(self.__tasks[taskname], output_paths[i])
+            print('multicam task "{}" saved at {}'.format(taskname, output_paths[i]))
             self.__tasks.pop(taskname)
             self.__tasks_len.poo(taskname)
-            print('multicam task "{}":{} solved!'.format(taskname, video_path))
-            # TODO : save video
+            cnt += 1
 
     def multicam(self, taskname, query_path, video_paths, output_paths):
         if len(video_paths) != len(output_paths):
@@ -69,10 +89,11 @@ class reidCore:
             self.__tasks[taskname].append(i)
             self.__tasks_len[taskname] += 1
         self.gen_sample(taskname)
+        print('nearperson task "{}" solved!'.format(taskname))
+        self.save_video(self.__tasks[taskname], output_path)
+        print('nearperson task "{}" saved at {}'.format(taskname, output_path))
         self.__tasks.pop(taskname)
         self.__tasks_len.pop(taskname)
-        print('nearperson task "{}" solved!'.format(taskname))
-        # TODO : save video
 
     def nearperson(self, taskname, query_path, video_path, output_path):
         self.__tasks[taskname] = []
