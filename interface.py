@@ -68,20 +68,25 @@ class reidCore:
             self.__tasks[taskname] = []
             self.__tasks_len[taskname] = 0
             it = reid(query_path, video_path)
+            cnt = 0
             for i in it:
                 if not self.check_flag(taskname):
                     print('multicam task "{}" stoped'.format(taskname))
                     self.__tasks_len.pop(taskname)
                     self.__tasks.pop(taskname)
                     return
+                if cnt % 30 == 0:
+                    print('processing {} frame'.format(cnt))
                 self.__tasks[taskname].append(i)
                 self.__tasks_len[taskname] += 1
+                cnt += 1
             self.gen_sample(taskname)
             print('multicam task "{}":{} solved!'.format(taskname, video_path))
             self.save_video(self.__tasks[taskname], output_paths[i])
-            print('multicam task "{}" saved at {}'.format(taskname, output_paths[i]))
+            print('multicam task "{}":{} saved at {}'.format(taskname, video_path, output_paths[i]))
             self.__tasks_len.pop(taskname)
             self.__tasks.pop(taskname)
+        print('multicam task "{}" all end'.format(taskname))
 
     def multicam(self, taskname, query_path, video_paths, output_paths):
         if len(video_paths) != len(output_paths):
