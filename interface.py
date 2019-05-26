@@ -107,14 +107,14 @@ class reidCore:
 
     def __nearperson(self, taskname, query_path, video_path, output_path, nearby_k=1):
         print('nearperson task "{}" thread start running : {} {} {}'.format(
-            taskname, query_path, video_paths, output_path
+            taskname, query_path, video_path, output_path
         ))
         print('nearperson task "{}" getting person'.format(taskname))
         that_person = nearby(query_path, video_path, nearby_k=nearby_k)
         print('nearperson task "{}" got {} person'.format(taskname, len(that_person)))
         self.__tasks[taskname] = []
         self.__tasks_len[taskname] = 0
-        it = reid([query_path, that_person], video_path)
+        it = reid([query_path]+ that_person, video_path)
         for i in it:
             if not self.check_flag(taskname):
                 print('nearperson task "{}" stoped'.format(taskname))
