@@ -39,14 +39,19 @@ class reidCore:
         return True
 
     def save_video(self, taskname, images, output_path):
-        fourcc = 'X264'
+        print('save video, task: {}, frames: {},path: {}'.format(taskname, len(images), output_path))
+        fourcc = 'mp4v'
         fps = 30
         shape = images[0].shape
         width = shape[1]
         height = shape[0]
         videoWriter = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*fourcc), fps, (width, height))
+        if not videoWriter.isOpened():
+            print('task {} save videoWriter not open'.format(taskname))
+            return
         cnt = 0
         tot = len(images)
+        print('start save video, task{}'.format(taskname))
         for image in images:
             if not self.check_flag(taskname):
                 print('task "{}" stoped'.format(taskname))
@@ -54,9 +59,10 @@ class reidCore:
                 return
             videoWriter.write(image[:,:,::-1])
             cnt += 1
-            if cnt % 150:
+            if cnt % 30:
                 print('video save {}/{}'.format(cnt, tot))
         videoWriter.release()
+        print('task {} save end!'.format(taskname))
 
     def __multicam(self, taskname, query_path, video_paths, output_paths):
         print('multicam task "{}" thread start running : {} {} {}'.format(
@@ -64,6 +70,7 @@ class reidCore:
         ))
         for i in range(len(video_paths)):
             video_path = video_paths[i]
+            output_path = output_paths[i]
             print('multicam task "{}" solving {}'.format(taskname, video_path))
             self.__tasks[taskname] = []
             self.__tasks_len[taskname] = 0
@@ -82,8 +89,8 @@ class reidCore:
                 cnt += 1
             self.gen_sample(taskname)
             print('multicam task "{}":{} solved!'.format(taskname, video_path))
-            self.save_video(self.__tasks[taskname], output_paths[i])
-            print('multicam task "{}":{} saved at {}'.format(taskname, video_path, output_paths[i]))
+            self.save_video(taskname, self.__tasks[taskname], output_path)
+            print('multicam task "{}":{} saved at {}'.format(taskname, video_path, output_path))
             self.__tasks_len.pop(taskname)
             self.__tasks.pop(taskname)
         print('multicam task "{}" all end'.format(taskname))
@@ -107,7 +114,7 @@ class reidCore:
         print('nearperson task "{}" got {} person'.format(taskname, len(that_person)))
         self.__tasks[taskname] = []
         self.__tasks_len[taskname] = 0
-        it = reid(that_person, video_path)
+        it = reid([query_path, that_person], video_path)
         for i in it:
             if not self.check_flag(taskname):
                 print('nearperson task "{}" stoped'.format(taskname))
@@ -118,7 +125,7 @@ class reidCore:
             self.__tasks_len[taskname] += 1
         self.gen_sample(taskname)
         print('nearperson task "{}" solved!'.format(taskname))
-        self.save_video(self.__tasks[taskname], output_path)
+        self.save_video(taskname, self.__tasks[taskname], output_path)
         print('nearperson task "{}" saved at {}'.format(taskname, output_path))
         self.__tasks_len.pop(taskname)
         self.__tasks.pop(taskname)
