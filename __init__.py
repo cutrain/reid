@@ -73,10 +73,11 @@ def reid(query_path, video_path, exist_object=False,
          progress=True, class_='person', query_optimize=True,
          auto_backup=True, backup_rate=24, save=True, load=True):
     assert class_ in ['person'], "class {} not implemented".format(class_)
-    print('checking files')
+    print('reid : checking files')
     assert os.path.exists(video_path), "video path is not avaliable"
 
     # check query type
+    print('reid : reading files')
     query_images = []
     querys = []
     if not isinstance(query_path, list):
@@ -99,6 +100,8 @@ def reid(query_path, video_path, exist_object=False,
             else:
                 raise NotImplementedError
 
+    print('reid : loading querys')
+
     # load query feature
     for query_image in query_images:
         if query_optimize:
@@ -110,6 +113,7 @@ def reid(query_path, video_path, exist_object=False,
         query = list(get_feature([query_image]))
         querys.extend(query)
 
+    print('reid : loading exist data')
     # load exist data
     global __dataset_path
     exist_data = {}
@@ -129,6 +133,7 @@ def reid(query_path, video_path, exist_object=False,
         exist_len = len(exist_data)
         print('data already exists, read {} frames'.format(exist_len))
 
+    print('reid : prepare video')
     # prepare video
     video = get_data(video_path)
     video.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
@@ -143,6 +148,7 @@ def reid(query_path, video_path, exist_object=False,
     time_counter = [start]
     frame_counter = [start_frame]
 
+    print('reid : start running')
     for frame_num in range(start_frame, video_length):
         # get frame info
         ret, image = video.read()
