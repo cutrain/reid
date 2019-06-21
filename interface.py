@@ -198,14 +198,21 @@ class carCore:
         return True
 
     def save_video(self, taskname, images, output_path):
-        fourcc = 'X264'
+        print('save video, task: {}, frames: {},path: {}'.format(taskname, len(images), output_path))
+        fourcc = 'mp4v'
         fps = 30
         shape = images[0].shape
         width = shape[1]
         height = shape[0]
         videoWriter = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*fourcc), fps, (width, height))
+        if not videoWriter.isOpened():
+            print('task {} save videoWriter not open'.format(taskname))
+            return
+        with open(output_path+'lock', 'wb'):
+            pass
         cnt = 0
         tot = len(images)
+        print('start save video, task{}'.format(taskname))
         for image in images:
             if not self.check_flag(taskname):
                 print('task "{}" stoped'.format(taskname))
@@ -213,9 +220,12 @@ class carCore:
                 return
             videoWriter.write(image[:,:,::-1])
             cnt += 1
-            if cnt % 150:
+            if cnt % 30:
                 print('video save {}/{}'.format(cnt, tot))
         videoWriter.release()
+        import os
+        os.remove(output_path+'lock')
+        print('task {} save end!'.format(taskname))
 
     def __car(self, taskname, query_path, video_paths, output_paths):
         print('car task "{}" thread start running : {} {} {}'.format(
@@ -223,10 +233,12 @@ class carCore:
         ))
         for i in range(len(video_paths)):
             video_path = video_paths[i]
+            output_path = output_paths[i]
             print('car task "{}" solving {}'.format(taskname, video_path))
             self.__tasks[taskname] = []
             self.__tasks_len[taskname] = 0
 
+            cnt = 0
             video = get_data(video_path)
             video_length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
             for frame_num in range(video_length):
@@ -241,14 +253,18 @@ class carCore:
                     self.__tasks_len.pop(taskname)
                     self.__tasks.pop(taskname)
                     return
+                if cnt % 30 == 0:
+                    print('processing {} frame'.format(cnt))
                 self.__tasks[taskname].append(image)
                 self.__tasks_len[taskname] += 1
+                cnt += 1
             self.gen_sample(taskname)
             print('car task "{}":{} solved!'.format(taskname, video_path))
-            self.save_video(self.__tasks[taskname], output_paths[i])
-            print('car task "{}" saved at {}'.format(taskname, output_paths[i]))
+            self.save_video(taskname, self.__tasks[taskname], output_path)
+            print('car task "{}":{} saved at {}'.format(taskname, video_path, output_path))
             self.__tasks_len.pop(taskname)
             self.__tasks.pop(taskname)
+        print('car task "{}" all end'.format(taskname))
 
     def car(self, taskname, query_path, video_paths, output_paths):
         if len(video_paths) != len(output_paths):
