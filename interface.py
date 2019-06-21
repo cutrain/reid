@@ -49,6 +49,8 @@ class reidCore:
         if not videoWriter.isOpened():
             print('task {} save videoWriter not open'.format(taskname))
             return
+        with open(output_path+'lock', 'wb'):
+            pass
         cnt = 0
         tot = len(images)
         print('start save video, task{}'.format(taskname))
@@ -62,6 +64,8 @@ class reidCore:
             if cnt % 30:
                 print('video save {}/{}'.format(cnt, tot))
         videoWriter.release()
+        import os
+        os.remove(output_path+'lock')
         print('task {} save end!'.format(taskname))
 
     def __multicam(self, taskname, query_path, video_paths, output_paths):
