@@ -5,7 +5,7 @@ cffi==1.11.5
 cloudpickle==0.6.1
 cycler==0.10.0
 Cython==0.29.1
-dask==0.20.2
+dask==2021.10.0
 decorator==4.3.0
 easydict==1.9
 FALCONN==1.3.1
